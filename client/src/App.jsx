@@ -25,9 +25,9 @@ const App = () => {
   const [credits, setCredits] = useState(0);
   const [gameStarted, setGameStarted] = useState(false);
   const [slotValues, setSlotValues] = useState({
-    column1: "x",
-    column2: "x",
-    column3: "x",
+    column1: "✖",
+    column2: "✖",
+    column3: "✖",
   });
 
   // useQuery hook to fetch initial credits
@@ -35,7 +35,7 @@ const App = () => {
     console.log("Fetching initial credits...");
     const response = await axios.get(`${SERVER_URL}/api/credits`);
     console.log("Response from server:", response.data);
-    setCredits(response.data.credits); // Update initial credits from server
+    setCredits((credits) => response.data.credits); // Update initial credits from server
   });
 
   if (isLoading) {
@@ -53,11 +53,28 @@ const App = () => {
 
   // Function to randomly change symbols in each column
   const rollSlots = () => {
-    setSlotValues((slotValues) => ({
+    if (credits <= 0) {
+      console.log("You don't have enough credits to play.");
+      return;
+    }
+
+    setCredits((credits) => credits - 1);
+
+    // Generate new random symbols for each column
+    const newSlotValues = {
       column1: getRandomSymbol(),
       column2: getRandomSymbol(),
       column3: getRandomSymbol(),
-    }));
+    };
+
+    const winAmount = isWin(newSlotValues); // Check if it's a win and calculate the win amount
+
+    if (winAmount) {
+      setCredits((credits) => credits + winAmount);
+      console.log(`You win ${winAmount} credits!`);
+    }
+
+    setSlotValues((slotValues) => newSlotValues);
   };
 
   // Function to return a random symbol
@@ -65,6 +82,15 @@ const App = () => {
     const symbols = Object.keys(SYMBOLS);
     const randomIndex = Math.floor(Math.random() * symbols.length);
     return symbols[randomIndex];
+  };
+
+  // Function to check if there's a win and return the win amount, or false if no win
+  const isWin = ({ column1, column2, column3 }) => {
+    if (column1 === column2 && column2 === column3) {
+      // if all three columns are the same
+      return REWARDS[column1] || 0; // return the reward amount or 0 if not found
+    }
+    return false;
   };
 
   return (
