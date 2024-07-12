@@ -1,6 +1,7 @@
 import React, { useState } from "react";
 import axios from "axios";
 import { useQuery } from "react-query";
+import "./app.css";
 
 const SERVER_URL = "http://localhost:5000";
 
@@ -24,9 +25,9 @@ const App = () => {
   const [credits, setCredits] = useState(0);
   const [gameStarted, setGameStarted] = useState(false);
   const [slotValues, setSlotValues] = useState({
-    column1: "X",
-    column2: "X",
-    column3: "X",
+    column1: "x",
+    column2: "x",
+    column3: "x",
   });
 
   // useQuery hook to fetch initial credits
@@ -47,10 +48,10 @@ const App = () => {
 
   const startGame = () => {
     console.log("Game started!");
-    setGameStarted(true);
+    setGameStarted((gameStarted) => true);
   };
 
-  // Function to randomly change symbols in each column, will be updated later from backend
+  // Function to randomly change symbols in each column
   const rollSlots = () => {
     setSlotValues((slotValues) => ({
       column1: getRandomSymbol(),
@@ -59,6 +60,7 @@ const App = () => {
     }));
   };
 
+  // Function to return a random symbol
   const getRandomSymbol = () => {
     const symbols = Object.keys(SYMBOLS);
     const randomIndex = Math.floor(Math.random() * symbols.length);
@@ -66,10 +68,10 @@ const App = () => {
   };
 
   return (
-    <div>
+    <div className="container">
       <h1>Casino Jackpot</h1>
 
-      <div>
+      <div className="slot-container">
         {gameStarted ? (
           <Slots slotValues={slotValues} />
         ) : (
@@ -99,11 +101,20 @@ const Slots = ({ slotValues }) => (
 );
 
 const SlotColumn = ({ symbol }) => {
+  if (!symbol) {
+    return (
+      <div className="slot-column">
+        <h2 className="slot-icon"> </h2>
+        <p className="slot-label"> </p>
+      </div>
+    );
+  }
+
   console.log(`Rendering SlotColumn for ${SYMBOLS[symbol]}`);
   return (
-    <div>
-      <h2>{SYMBOLS[symbol]}</h2>
-      <p>{symbol}</p>
+    <div className="slot-column">
+      <h2 className="slot-icon">{SYMBOLS[symbol]}</h2>
+      <p className="slot-label">{symbol}</p>
     </div>
   );
 };
