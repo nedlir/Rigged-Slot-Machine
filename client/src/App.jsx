@@ -4,11 +4,13 @@ import { useQuery } from "react-query";
 
 const SERVER_URL = "http://localhost:5000";
 
+// Constants for symbols and their rewards
 const SYMBOLS = {
-  C: "🍒", // cherry emoji
-  L: "🍋", // lemon emoji
-  O: "🍊", // orange emoji
-  W: "🍉", // watermelon emoji
+  C: "🍒", // Cherry emoji
+  L: "🍋", // Lemon emoji
+  O: "🍊", // Orange emoji
+  W: "🍉", // Watermelon emoji
+  // X: "✖",
 };
 
 const REWARDS = {
@@ -48,17 +50,16 @@ const App = () => {
     setGameStarted(true);
   };
 
-  // Function to randomly change symbols in each column, will be moved to backend later
+  // Function to randomly change symbols in each column, will be updated later from backend
   const rollSlots = () => {
-    setSlotValues({
-      column1: randomSymbol(),
-      column2: randomSymbol(),
-      column3: randomSymbol(),
-    });
+    setSlotValues((slotValues) => ({
+      column1: getRandomSymbol(),
+      column2: getRandomSymbol(),
+      column3: getRandomSymbol(),
+    }));
   };
 
-  // Function to return a random symbol, will be moved to backend later
-  const randomSymbol = () => {
+  const getRandomSymbol = () => {
     const symbols = Object.keys(SYMBOLS);
     const randomIndex = Math.floor(Math.random() * symbols.length);
     return symbols[randomIndex];
