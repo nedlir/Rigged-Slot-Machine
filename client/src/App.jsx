@@ -79,7 +79,7 @@ const App = () => {
       const response = await axios.post(`${SERVER_URL}/api/cashout`, { email });
       const { credits } = response.data;
       console.log(`Cash out successful. Credits returned: ${credits}`);
-      setCredits((credits) => redits);
+      setCredits((credits) => credits);
       setIsGameOver((isGameOver) => true);
       setIsCashOut((isCashOut) => true);
     } catch (error) {
