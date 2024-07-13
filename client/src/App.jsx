@@ -1,15 +1,14 @@
 import React, { useState } from "react";
 import axios from "axios";
-import { useQuery } from "react-query";
 import "./app.css";
 
 const SERVER_URL = "http://localhost:5000";
 
 const SYMBOLS_MAP = {
-  C: "🍒", // Cherry emoji
-  L: "🍋", // Lemon emoji
-  O: "🍊", // Orange emoji
-  W: "🍉", // Watermelon emoji
+  C: "🍒",
+  L: "🍋",
+  O: "🍊",
+  W: "🍉",
 };
 
 const REWARDS_MAP = {
@@ -21,46 +20,86 @@ const REWARDS_MAP = {
 
 const App = () => {
   const [credits, setCredits] = useState(0);
+  const [email, setEmail] = useState("");
   const [isGameStarted, setIsGameStarted] = useState(false);
   const [isGameOver, setIsGameOver] = useState(false);
+  const [isCashOut, setIsCashOut] = useState(false);
   const [slotValues, setSlotValues] = useState({
     column1: "W",
     column2: "W",
     column3: "W",
   });
 
-  // useQuery hook to fetch initial credits
-  const { isLoading, isError } = useQuery("initialCredits", async () => {
-    console.log("Fetching initial credits...");
-    const response = await axios.get(`${SERVER_URL}/api/credits`);
-    console.log("Response from server:", response.data);
-    setCredits((credits) => response.data.credits); // Update initial credits from server
-  });
-
-  if (isLoading) {
-    return <div>Loading...</div>;
-  }
-
-  if (isError) {
-    return <div>Error fetching initial credits</div>;
-  }
-
-  const startGame = () => {
-    console.log("Game started!");
-    setIsGameStarted((isGameStarted) => true);
+  const handleEmailChange = (e) => {
+    setEmail((email) => e.target.value);
   };
 
-  const cashOut = () => {
-    console.log("Button Cash Out pressed");
-    setIsGameOver((isGameOver) => true);
+  const startGame = async () => {
+    try {
+      console.log(`Starting game for ${email}`);
+      const response = await axios.post(`${SERVER_URL}/api/register`, {
+        email,
+      });
+      const { credits } = response.data;
+
+      setCredits((credits) => credits);
+      setIsGameStarted((isGameStarted) => true);
+      setIsGameOver((isGameOver) => (credits <= 0 ? true : false)); // Set game over if credits are 0
+      setIsCashOut((isCashOut) => false);
+    } catch (error) {
+      console.error("Error registering user:", error);
+    }
   };
 
-  const buyCredits = () => {
-    setCredits((credits) => credits + 10);
-    setIsGameOver((isGameOver) => false); // Reset game over status when buying credits
+  const fetchCredits = async (userEmail) => {
+    try {
+      console.log(`Fetching credits for ${userEmail}`);
+      const response = await axios.get(`${SERVER_URL}/api/credits`, {
+        params: { email: userEmail },
+      });
+      const { credits } = response.data;
+      setCredits((credits) => credits);
+
+      if (credits <= 0) {
+        setIsGameOver((isGameOver) => true);
+      }
+    } catch (error) {
+      console.error("Error fetching credits:", error);
+    }
   };
 
-  // Function to roll the slots
+  const cashOut = async () => {
+    if (credits <= 0) {
+      console.log("You don't have enough credits to cash out.");
+      return;
+    }
+
+    try {
+      console.log(`Cash out request for ${email}`);
+      const response = await axios.post(`${SERVER_URL}/api/cashout`, { email });
+      const { credits } = response.data;
+      console.log(`Cash out successful. Credits returned: ${credits}`);
+      setCredits((credits) => redits);
+      setIsGameOver((isGameOver) => true);
+      setIsCashOut((isCashOut) => true);
+    } catch (error) {
+      console.error("Error cashing out:", error);
+    }
+  };
+
+  const buyCredits = async () => {
+    try {
+      console.log(`Buying credits for ${email}`);
+      const response = await axios.post(`${SERVER_URL}/api/buy`, { email });
+      const { credits } = response.data;
+      setCredits((credits) => credits);
+      setIsGameOver((isGameOver) => false);
+      setIsCashOut((isCashOut) => false);
+    } catch (error) {
+      console.error("Error buying credits:", error);
+    }
+  };
+
   const rollSlots = async () => {
     if (credits <= 0) {
       console.log("You don't have enough credits to play.");
@@ -68,15 +107,19 @@ const App = () => {
     }
 
     try {
-      const response = await axios.post(`${SERVER_URL}/api/roll`, { credits });
-      console.log("Response from server:", response.data);
+      console.log(`Rolling slots for ${email}`);
+      const response = await axios.post(`${SERVER_URL}/api/roll`, { email });
       const { newSlotValues, winAmount } = response.data;
 
-      setCredits((credits) => credits - 1);
+      const updatedCredits = credits - 1 + winAmount;
+      setCredits((credits) => updatedCredits);
       setSlotValues((slotValues) => newSlotValues);
 
+      if (updatedCredits <= 0) {
+        setIsGameOver((isGameOver) => true);
+      }
+
       if (winAmount) {
-        setCredits((credits) => credits + winAmount);
         console.log(`You win ${winAmount} credits!`);
       }
     } catch (error) {
@@ -88,7 +131,28 @@ const App = () => {
     <div className="container">
       <h1>Casino Jackpot</h1>
 
-      {isGameStarted ? (
+      {!isGameStarted ? (
+        <div>
+          <p>
+            {"Welcome to the rigged machine ✨"}
+            <br />
+            {"Get ready to lose some money! 🤑🤑🤑"}
+          </p>
+          <input
+            type="email"
+            placeholder="Enter your email"
+            value={email}
+            onChange={handleEmailChange}
+          />
+          <button
+            className="game-start-button"
+            onClick={startGame}
+            disabled={!email}
+          >
+            Start Game
+          </button>
+        </div>
+      ) : (
         <div>
           <div className="slot-container">
             <Slots slotValues={slotValues} />
@@ -103,39 +167,29 @@ const App = () => {
               Roll Slots
             </button>
           )}
-          {isGameOver ? (
-            <p className="thank-you-message">
-              {`You cashed out ${credits} credits! 🎉`}
-              <br />
-              {"Come back to lose your money next time...💰"}
-            </p>
-          ) : (
+
+          {(isGameOver || credits <= 0) && !isCashOut && (
             <div>
-              {credits === 0 ? (
-                <div>
-                  <p className="game-over-message">
-                    Game is over, buy some more credits to play... 💸💸💸
-                  </p>
-                  <button className="buy-button" onClick={buyCredits}>
-                    Buy 10 more credits
-                  </button>
-                </div>
-              ) : (
-                <button className="cash-out-button" onClick={cashOut}>
-                  Cash Out
-                </button>
-              )}
+              <p className="game-over-message">
+                {isCashOut
+                  ? `You cashed out ${credits} credits! 🎉 Come back to lose your money next time...💰`
+                  : "Buy more credits to play... 💸💸💸"}
+              </p>
+              <button className="buy-button" onClick={buyCredits}>
+                Buy 10 more credits
+              </button>
             </div>
           )}
-        </div>
-      ) : (
-        <div>
-          <p>
-            Welcome to the rigged machine. Get ready to lose some money! 🤑🤑🤑
-          </p>
-          <button className="game-start-button" onClick={startGame}>
-            Start Game
-          </button>
+
+          {credits > 0 && !isGameOver && !isCashOut && (
+            <button className="cash-out-button" onClick={cashOut}>
+              Cash Out
+            </button>
+          )}
+
+          {credits <= 0 && !isCashOut && !isGameOver && (
+            <p className="welcome-back-message">{`Welcome back ${email}!`}</p>
+          )}
         </div>
       )}
 
@@ -153,23 +207,12 @@ const Slots = ({ slotValues }) => (
   </>
 );
 
-const SlotColumn = ({ symbol }) => {
-  if (!symbol) {
-    return (
-      <div className="slot-column">
-        <h2 className="slot-icon"> </h2>
-        <p className="slot-label"> </p>
-      </div>
-    );
-  }
-
-  return (
-    <div className="slot-column">
-      <h2 className="slot-icon">{SYMBOLS_MAP[symbol]}</h2>
-      <p className="slot-label">{symbol}</p>
-    </div>
-  );
-};
+const SlotColumn = ({ symbol }) => (
+  <div className="slot-column">
+    <h2 className="slot-icon">{SYMBOLS_MAP[symbol]}</h2>
+    <p className="slot-label">{symbol}</p>
+  </div>
+);
 
 const CreditsPanel = () => (
   <div>
