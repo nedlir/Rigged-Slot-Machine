@@ -19,7 +19,7 @@ const REWARDS_MAP = {
 };
 
 const App = () => {
-  const [credits, setCredits] = useState(0);
+  const [userCredits, setUserCredits] = useState(0);
   const [email, setEmail] = useState("");
   const [isGameStarted, setIsGameStarted] = useState(false);
   const [isGameOver, setIsGameOver] = useState(false);
@@ -40,11 +40,11 @@ const App = () => {
       const response = await axios.post(`${SERVER_URL}/api/register`, {
         email,
       });
-      const { credits } = response.data;
+      const { credits: creditsFromServer } = response.data;
 
-      setCredits((credits) => credits);
+      setUserCredits((userCredits) => creditsFromServer);
       setIsGameStarted((isGameStarted) => true);
-      setIsGameOver((isGameOver) => (credits <= 0 ? true : false)); // Set game over if credits are 0
+      setIsGameOver((isGameOver) => (creditsFromServer <= 0 ? true : false)); // Set game over if credits are 0
       setIsCashOut((isCashOut) => false);
     } catch (error) {
       console.error("Error registering user:", error);
@@ -57,10 +57,10 @@ const App = () => {
       const response = await axios.get(`${SERVER_URL}/api/credits`, {
         params: { email: userEmail },
       });
-      const { credits } = response.data;
-      setCredits((credits) => credits);
+      const { credits: creditsFromServer } = response.data;
+      setUserCredits((userCredits) => creditsFromServer);
 
-      if (credits <= 0) {
+      if (creditsFromServer <= 0) {
         setIsGameOver((isGameOver) => true);
       }
     } catch (error) {
@@ -69,7 +69,7 @@ const App = () => {
   };
 
   const cashOut = async () => {
-    if (credits <= 0) {
+    if (userCredits <= 0) {
       console.log("You don't have enough credits to cash out.");
       return;
     }
@@ -77,9 +77,11 @@ const App = () => {
     try {
       console.log(`Cash out request for ${email}`);
       const response = await axios.post(`${SERVER_URL}/api/cashout`, { email });
-      const { credits } = response.data;
-      console.log(`Cash out successful. Credits returned: ${credits}`);
-      setCredits((credits) => credits);
+      const { credits: creditsFromServer } = response.data;
+      console.log(
+        `Cash out successful. Credits returned: ${creditsFromServer}`
+      );
+      setUserCredits((userCredits) => creditsFromServer);
       setIsGameOver((isGameOver) => true);
       setIsCashOut((isCashOut) => true);
     } catch (error) {
@@ -91,8 +93,8 @@ const App = () => {
     try {
       console.log(`Buying credits for ${email}`);
       const response = await axios.post(`${SERVER_URL}/api/buy`, { email });
-      const { credits } = response.data;
-      setCredits((credits) => credits);
+      const { credits: creditsFromServer } = response.data;
+      setUserCredits((userCredits) => creditsFromServer);
       setIsGameOver((isGameOver) => false);
       setIsCashOut((isCashOut) => false);
     } catch (error) {
@@ -101,7 +103,7 @@ const App = () => {
   };
 
   const rollSlots = async () => {
-    if (credits <= 0) {
+    if (userCredits <= 0) {
       console.log("You don't have enough credits to play.");
       return;
     }
@@ -111,8 +113,8 @@ const App = () => {
       const response = await axios.post(`${SERVER_URL}/api/roll`, { email });
       const { newSlotValues, winAmount } = response.data;
 
-      const updatedCredits = credits - 1 + winAmount;
-      setCredits((credits) => updatedCredits);
+      const updatedCredits = userCredits - 1 + winAmount;
+      setUserCredits((userCredits) => updatedCredits);
       setSlotValues((slotValues) => newSlotValues);
 
       if (updatedCredits <= 0) {
@@ -158,21 +160,21 @@ const App = () => {
             <Slots slotValues={slotValues} />
           </div>
 
-          {!isGameOver && credits > 0 && (
+          {!isGameOver && userCredits > 0 && (
             <button
               className="roll-button"
               onClick={rollSlots}
-              disabled={credits <= 0}
+              disabled={userCredits <= 0}
             >
               Roll Slots
             </button>
           )}
 
-          {(isGameOver || credits <= 0) && !isCashOut && (
+          {(isGameOver || userCredits <= 0) && !isCashOut && (
             <div>
               <p className="game-over-message">
                 {isCashOut
-                  ? `You cashed out ${credits} credits! 🎉 Come back to lose your money next time...💰`
+                  ? `You cashed out ${userCredits} credits! 🎉 Come back to lose your money next time...💰`
                   : "Buy more credits to play... 💸💸💸"}
               </p>
               <button className="buy-button" onClick={buyCredits}>
@@ -181,20 +183,20 @@ const App = () => {
             </div>
           )}
 
-          {credits > 0 && !isGameOver && !isCashOut && (
+          {userCredits > 0 && !isGameOver && !isCashOut && (
             <button className="cash-out-button" onClick={cashOut}>
               Cash Out
             </button>
           )}
 
-          {credits <= 0 && !isCashOut && !isGameOver && (
+          {userCredits <= 0 && !isCashOut && !isGameOver && (
             <p className="welcome-back-message">{`Welcome back ${email}!`}</p>
           )}
         </div>
       )}
 
       <CreditsPanel />
-      <Credits credits={credits} />
+      <Credits credits={userCredits} />
     </div>
   );
 };
