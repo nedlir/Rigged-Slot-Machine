@@ -1,11 +1,10 @@
 const express = require("express");
 const cors = require("cors");
-const bodyParser = require("body-parser");
 const app = express();
 const port = 5000;
 
 app.use(cors());
-app.use(bodyParser.json());
+app.use(express.json()); // Replaces body-parser
 
 const symbols = ["C", "L", "O", "W"];
 
@@ -20,7 +19,6 @@ const users = []; // will be moved to a database later
 
 const findUser = (email) => users.find((user) => user.email === email);
 
-//// APIs ////
 // register a new user or initialize user data:
 app.post("/api/register", (req, res) => {
   const { email } = req.body;
@@ -44,10 +42,15 @@ app.post("/api/register", (req, res) => {
 // get user credits:
 app.get("/api/credits", (req, res) => {
   const { email } = req.query;
+  if (!email) {
+    console.log("Error: Email is required");
+    return res.status(400).json({ error: "Email is required" });
+  }
+
   const user = findUser(email);
-  if (!email || !user) {
+  if (!user) {
     console.log("Error: User not found");
-    return res.status(400).json({ error: "User not found" });
+    return res.status(404).json({ error: "User not found" });
   }
   console.log(`Credits fetched for ${email}: ${user.credits}`);
   res.json({ credits: user.credits });
@@ -56,10 +59,15 @@ app.get("/api/credits", (req, res) => {
 // roll  slots and return new values and winning amount:
 app.post("/api/roll", (req, res) => {
   const { email } = req.body;
+  if (!email) {
+    console.log("Error: Email is required");
+    return res.status(400).json({ error: "Email is required" });
+  }
+
   const user = findUser(email);
-  if (!email || !user) {
+  if (!user) {
     console.log("Error: User not found");
-    return res.status(400).json({ error: "User not found" });
+    return res.status(404).json({ error: "User not found" });
   }
 
   if (user.credits <= 0) {
@@ -75,7 +83,7 @@ app.post("/api/roll", (req, res) => {
     column3: getRandomSymbol(),
   };
 
-  // use cheating based on the number of credits user have:
+  // use cheating based on the number of credits user has:
   const winAmount = calculateWinAmount(newSlotValues);
   let cheatProbability = 0;
   if (user.credits > 60) cheatProbability = 0.6;
@@ -93,12 +101,11 @@ app.post("/api/roll", (req, res) => {
     console.log(
       `Re-rolled values for ${email}: ${JSON.stringify(reRollSlotValues)}`
     );
-    user.credits = user.credits - 1 + reRollWinAmount;
+    user.credits = Math.max(user.credits - 1 + reRollWinAmount, 0); // Ensure credits do not go negative
     res.json({ newSlotValues: reRollSlotValues, winAmount: reRollWinAmount });
   } else {
-    console.log("users", users);
     console.log(`Slot values for ${email}: ${JSON.stringify(newSlotValues)}`);
-    user.credits = user.credits - 1 + winAmount;
+    user.credits = Math.max(user.credits - 1 + winAmount, 0); // Ensure credits do not go negative
     res.json({ newSlotValues, winAmount });
   }
 });
@@ -106,10 +113,15 @@ app.post("/api/roll", (req, res) => {
 // cash out the user credits and clear account
 app.post("/api/cashout", (req, res) => {
   const { email } = req.body;
+  if (!email) {
+    console.log("Error: Email is required");
+    return res.status(400).json({ error: "Email is required" });
+  }
+
   const user = findUser(email);
-  if (!email || !user) {
+  if (!user) {
     console.log("Error: User not found");
-    return res.status(400).json({ error: "User not found" });
+    return res.status(404).json({ error: "User not found" });
   }
 
   const credits = user.credits;
@@ -123,10 +135,15 @@ app.post("/api/cashout", (req, res) => {
 // Buy more credits for the user
 app.post("/api/buy", (req, res) => {
   const { email } = req.body;
+  if (!email) {
+    console.log("Error: Email is required");
+    return res.status(400).json({ error: "Email is required" });
+  }
+
   const user = findUser(email);
-  if (!email || !user) {
+  if (!user) {
     console.log("Error: User not found");
-    return res.status(400).json({ error: "User not found" });
+    return res.status(404).json({ error: "User not found" });
   }
 
   user.credits = user.credits + 10;
