@@ -5,16 +5,14 @@ import "./app.css";
 
 const SERVER_URL = "http://localhost:5000";
 
-// Constants for symbols and their rewards
-const SYMBOLS = {
+const SYMBOLS_MAP = {
   C: "🍒", // Cherry emoji
   L: "🍋", // Lemon emoji
   O: "🍊", // Orange emoji
   W: "🍉", // Watermelon emoji
-  // X: "✖",
 };
 
-const REWARDS = {
+const REWARDS_MAP = {
   C: 10,
   L: 20,
   O: 30,
@@ -23,11 +21,12 @@ const REWARDS = {
 
 const App = () => {
   const [credits, setCredits] = useState(0);
-  const [gameStarted, setGameStarted] = useState(false);
+  const [isGameStarted, setIsGameStarted] = useState(false);
+  const [isGameOver, setIsGameOver] = useState(false);
   const [slotValues, setSlotValues] = useState({
-    column1: "✖",
-    column2: "✖",
-    column3: "✖",
+    column1: "W",
+    column2: "W",
+    column3: "W",
   });
 
   // useQuery hook to fetch initial credits
@@ -48,10 +47,20 @@ const App = () => {
 
   const startGame = () => {
     console.log("Game started!");
-    setGameStarted((gameStarted) => true);
+    setIsGameStarted((isGameStarted) => true);
   };
 
-  // Function to randomly change symbols in each column
+  const cashOut = () => {
+    console.log("Button Cash Out pressed");
+    setIsGameOver((isGameOver) => true);
+  };
+
+  const buyCredits = () => {
+    setCredits((credits) => credits + 10);
+    setIsGameOver((isGameOver) => false); // Reset game over status when buying credits
+  };
+
+  // randomly change symbols in each column
   const rollSlots = () => {
     if (credits <= 0) {
       console.log("You don't have enough credits to play.");
@@ -77,18 +86,17 @@ const App = () => {
     setSlotValues((slotValues) => newSlotValues);
   };
 
-  // Function to return a random symbol
   const getRandomSymbol = () => {
-    const symbols = Object.keys(SYMBOLS);
+    const symbols = Object.keys(SYMBOLS_MAP);
     const randomIndex = Math.floor(Math.random() * symbols.length);
     return symbols[randomIndex];
   };
 
-  // Function to check if there's a win and return the win amount, or false if no win
+  // check if there's a win and return the winning amount, or false if no win
   const isWin = ({ column1, column2, column3 }) => {
     if (column1 === column2 && column2 === column3) {
-      // if all three columns are the same
-      return REWARDS[column1] || 0; // return the reward amount or 0 if not found
+      // if all three columns are the same then win:
+      return REWARDS_MAP[column1]; // return the reward dict
     }
     return false;
   };
@@ -97,20 +105,56 @@ const App = () => {
     <div className="container">
       <h1>Casino Jackpot</h1>
 
-      <div className="slot-container">
-        {gameStarted ? (
-          <Slots slotValues={slotValues} />
-        ) : (
-          <>
-            <SlotColumn symbol={slotValues.column1} />
-            <SlotColumn symbol={slotValues.column2} />
-            <SlotColumn symbol={slotValues.column3} />
-          </>
-        )}
-      </div>
+      {isGameStarted ? (
+        <div>
+          <div className="slot-container">
+            <Slots slotValues={slotValues} />
+          </div>
 
-      {!gameStarted && <button onClick={startGame}>Start Game</button>}
-      {gameStarted && <button onClick={rollSlots}>Roll Slots</button>}
+          {!isGameOver && credits > 0 && (
+            <button
+              className="roll-button"
+              onClick={rollSlots}
+              disabled={credits <= 0}
+            >
+              Roll Slots
+            </button>
+          )}
+          {isGameOver ? (
+            <p className="thank-you-message">
+              {`You cashed out ${credits} credits! 🎉`}
+              <br />
+              {"Come back to lose your money next time...💰"}
+            </p>
+          ) : (
+            <div>
+              {credits === 0 ? (
+                <div>
+                  <p className="game-over-message">
+                    Game is over, buy some more credits to play... 💸💸💸
+                  </p>
+                  <button className="buy-button" onClick={buyCredits}>
+                    Buy 10 more credits
+                  </button>
+                </div>
+              ) : (
+                <button className="cash-out-button" onClick={cashOut}>
+                  Cash Out
+                </button>
+              )}
+            </div>
+          )}
+        </div>
+      ) : (
+        <div>
+          <p>
+            Welcome to the rigged machine. Get ready to lose some money! 🤑🤑🤑
+          </p>
+          <button className="game-start-button" onClick={startGame}>
+            Start Game
+          </button>
+        </div>
+      )}
 
       <CreditsPanel />
       <Credits credits={credits} />
@@ -136,31 +180,24 @@ const SlotColumn = ({ symbol }) => {
     );
   }
 
-  console.log(`Rendering SlotColumn for ${SYMBOLS[symbol]}`);
   return (
     <div className="slot-column">
-      <h2 className="slot-icon">{SYMBOLS[symbol]}</h2>
+      <h2 className="slot-icon">{SYMBOLS_MAP[symbol]}</h2>
       <p className="slot-label">{symbol}</p>
     </div>
   );
 };
 
-const CreditsPanel = () => {
-  console.log("Rendering CreditsPanel");
-  return (
-    <div>
-      <h2>CreditsPanel</h2>
-    </div>
-  );
-};
+const CreditsPanel = () => (
+  <div>
+    <h2>CreditsPanel</h2>
+  </div>
+);
 
-const Credits = ({ credits }) => {
-  console.log("Rendering Credits");
-  return (
-    <div>
-      <h2>Current Credits: {credits}</h2>
-    </div>
-  );
-};
+const Credits = ({ credits }) => (
+  <div>
+    <h2>Current Credits: {credits}</h2>
+  </div>
+);
 
 export default App;
