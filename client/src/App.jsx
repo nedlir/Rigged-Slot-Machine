@@ -60,45 +60,28 @@ const App = () => {
     setIsGameOver((isGameOver) => false); // Reset game over status when buying credits
   };
 
-  // randomly change symbols in each column
-  const rollSlots = () => {
+  // Function to roll the slots
+  const rollSlots = async () => {
     if (credits <= 0) {
       console.log("You don't have enough credits to play.");
       return;
     }
 
-    setCredits((credits) => credits - 1);
+    try {
+      const response = await axios.post(`${SERVER_URL}/api/roll`, { credits });
+      console.log("Response from server:", response.data);
+      const { newSlotValues, winAmount } = response.data;
 
-    // Generate new random symbols for each column
-    const newSlotValues = {
-      column1: getRandomSymbol(),
-      column2: getRandomSymbol(),
-      column3: getRandomSymbol(),
-    };
+      setCredits((credits) => credits - 1);
+      setSlotValues((slotValues) => newSlotValues);
 
-    const winAmount = isWin(newSlotValues); // Check if it's a win and calculate the win amount
-
-    if (winAmount) {
-      setCredits((credits) => credits + winAmount);
-      console.log(`You win ${winAmount} credits!`);
+      if (winAmount) {
+        setCredits((credits) => credits + winAmount);
+        console.log(`You win ${winAmount} credits!`);
+      }
+    } catch (error) {
+      console.error("Error rolling slots:", error);
     }
-
-    setSlotValues((slotValues) => newSlotValues);
-  };
-
-  const getRandomSymbol = () => {
-    const symbols = Object.keys(SYMBOLS_MAP);
-    const randomIndex = Math.floor(Math.random() * symbols.length);
-    return symbols[randomIndex];
-  };
-
-  // check if there's a win and return the winning amount, or false if no win
-  const isWin = ({ column1, column2, column3 }) => {
-    if (column1 === column2 && column2 === column3) {
-      // if all three columns are the same then win:
-      return REWARDS_MAP[column1]; // return the reward dict
-    }
-    return false;
   };
 
   return (
