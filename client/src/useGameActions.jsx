@@ -10,12 +10,12 @@ export const useGameActions = () => {
   const [isGameOver, setIsGameOver] = useState(false);
   const [isCashOut, setIsCashOut] = useState(false);
   const [slotValues, setSlotValues] = useState({
-    column1: "W",
-    column2: "W",
-    column3: "W",
+    column1: "?",
+    column2: "?",
+    column3: "?",
   });
   const [isLoading, setIsLoading] = useState(false);
-  const [slotsSpinning, setSlotsSpinning] = useState(false);
+  const [isSlotsSpinning, setIsSlotsSpinning] = useState(false);
 
   const handleEmailChange = (e) => {
     setEmail((email) => e.target.value);
@@ -40,8 +40,10 @@ export const useGameActions = () => {
   };
 
   const cashOut = async () => {
-    if (userCredits <= 0) {
-      console.log("You don't have enough credits to cash out.");
+    if (isSlotsSpinning) {
+      console.log(
+        "slots are still spinning. Cash out will be available after they swtop"
+      );
       return;
     }
     setIsLoading((isLoading) => true);
@@ -74,14 +76,14 @@ export const useGameActions = () => {
   };
 
   const rollSlots = async () => {
-    if (userCredits <= 0 || slotsSpinning) {
+    if (userCredits <= 0 || isSlotsSpinning) {
       console.log(
         "You don't have enough credits to play or slots are already spinning."
       );
       return;
     }
-    setSlotsSpinning((slotsSpinning) => true);
-    setIsLoading(true);
+    setIsSlotsSpinning((isSlotsSpinning) => true);
+    setIsLoading((isLoading) => true);
     try {
       const response = await axios.post(`${SERVER_URL}/api/roll`, { email });
       const { newSlotValues, winAmount } = response.data;
@@ -110,7 +112,7 @@ export const useGameActions = () => {
           ...slotValues,
           column3: newSlotValues.column3,
         }));
-        setSlotsSpinning((slotsSpinning) => false); // all slots have finished spinning
+        setIsSlotsSpinning((isSlotsSpinning) => false); // all slots have finished spinning
       }, 3000);
 
       if (userCredits - 1 + winAmount <= 0) {
@@ -123,7 +125,7 @@ export const useGameActions = () => {
     } catch (error) {
       console.error("Error rolling slots:", error);
     } finally {
-      setIsLoading(false);
+      setIsLoading((isLoading) => false);
     }
   };
 
@@ -140,6 +142,6 @@ export const useGameActions = () => {
     isGameOver,
     isCashOut,
     slotValues,
-    slotsSpinning,
+    isSlotsSpinning,
   };
 };
