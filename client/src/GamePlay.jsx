@@ -1,4 +1,4 @@
-import React from "react";
+import React, { useState } from "react";
 import Slots from "./Slots";
 
 const GamePlay = ({
@@ -11,35 +11,80 @@ const GamePlay = ({
   cashOut,
   email,
   isLoading,
-}) => (
-  <div>
-    <UserInfo email={email} />
-    <div className="slot-container">
-      <Slots slotValues={slotValues} />
-    </div>
-    <CreditsDisplay userCredits={userCredits} />
-    <RollButton
-      rollSlots={rollSlots}
-      userCredits={userCredits}
-      isLoading={isLoading}
-      isGameOver={isGameOver}
-    />
-    {(isGameOver || userCredits <= 0) && (
-      <GameOverSection
-        isCashOut={isCashOut}
+  slotsSpinning,
+}) => {
+  const [localSlotsSpinning, setLocalSlotsSpinning] = useState(slotsSpinning);
+
+  const handleRollSlots = () => {
+    if (!localSlotsSpinning && userCredits > 0 && !isLoading) {
+      setLocalSlotsSpinning(true);
+      rollSlots().finally(() => {
+        setLocalSlotsSpinning(false);
+      });
+    }
+  };
+
+  const handleCashOut = () => {
+    if (!localSlotsSpinning) {
+      cashOut();
+    }
+  };
+
+  const RollButton = ({
+    rollSlots,
+    userCredits,
+    isLoading,
+    isGameOver,
+    slotsSpinning,
+  }) =>
+    !isGameOver &&
+    userCredits > 0 && (
+      <button
+        className="roll-button"
+        onClick={handleRollSlots}
+        disabled={isLoading || localSlotsSpinning}
+      >
+        {isLoading ? "Rolling..." : "Roll Slots"}
+      </button>
+    );
+
+  return (
+    <div>
+      <UserInfo email={email} />
+      <div className="slot-container">
+        <Slots slotValues={slotValues} />
+      </div>
+      <CreditsDisplay userCredits={userCredits} />
+      <RollButton
+        rollSlots={handleRollSlots}
         userCredits={userCredits}
-        buyCredits={buyCredits}
         isLoading={isLoading}
+        isGameOver={isGameOver}
+        slotsSpinning={localSlotsSpinning}
       />
-    )}
-    {userCredits > 0 && !isGameOver && !isCashOut && (
-      <CashOutButton cashOut={cashOut} isLoading={isLoading} />
-    )}
-    {userCredits <= 0 && !isCashOut && !isGameOver && (
-      <WelcomeBackMessage email={email} />
-    )}
-  </div>
-);
+      {(isGameOver || userCredits <= 0) && (
+        <GameOverSection
+          isCashOut={isCashOut}
+          userCredits={userCredits}
+          buyCredits={buyCredits}
+          isLoading={isLoading}
+        />
+      )}
+      {userCredits > 0 && !isGameOver && !isCashOut && (
+        <button
+          className="cash-out-button"
+          onClick={handleCashOut}
+          disabled={isLoading || localSlotsSpinning}
+        >
+          {isLoading ? "Processing..." : "Cash Out"}
+        </button>
+      )}
+      {userCredits <= 0 && !isCashOut && !isGameOver && (
+        <WelcomeBackMessage email={email} />
+      )}
+    </div>
+  );
+};
 
 const UserInfo = ({ email }) => <h2>Logged in as {email}</h2>;
 
@@ -48,18 +93,6 @@ const CreditsDisplay = ({ userCredits }) => (
     <h2>Current Credits: {userCredits}</h2>
   </div>
 );
-
-const RollButton = ({ rollSlots, userCredits, isLoading, isGameOver }) =>
-  !isGameOver &&
-  userCredits > 0 && (
-    <button
-      className="roll-button"
-      onClick={rollSlots}
-      disabled={isLoading || userCredits <= 0}
-    >
-      {isLoading ? "Rolling..." : "Roll Slots"}
-    </button>
-  );
 
 const GameOverSection = ({ isCashOut, userCredits, buyCredits, isLoading }) => (
   <div>
@@ -72,12 +105,6 @@ const GameOverSection = ({ isCashOut, userCredits, buyCredits, isLoading }) => (
       {isLoading ? "Processing..." : "Buy 10 more credits"}
     </button>
   </div>
-);
-
-const CashOutButton = ({ cashOut, isLoading }) => (
-  <button className="cash-out-button" onClick={cashOut} disabled={isLoading}>
-    {isLoading ? "Processing..." : "Cash Out"}
-  </button>
 );
 
 const WelcomeBackMessage = ({ email }) => (

@@ -1,4 +1,3 @@
-//// custom hook ////
 import { useState } from "react";
 import axios from "axios";
 
@@ -16,6 +15,7 @@ export const useGameActions = () => {
     column3: "W",
   });
   const [isLoading, setIsLoading] = useState(false);
+  const [slotsSpinning, setSlotsSpinning] = useState(false);
 
   const handleEmailChange = (e) => {
     setEmail((email) => e.target.value);
@@ -74,19 +74,46 @@ export const useGameActions = () => {
   };
 
   const rollSlots = async () => {
-    if (userCredits <= 0) {
-      console.log("You don't have enough credits to play.");
+    if (userCredits <= 0 || slotsSpinning) {
+      console.log(
+        "You don't have enough credits to play or slots are already spinning."
+      );
       return;
     }
-    setIsLoading((isLoading) => true);
+    setSlotsSpinning((slotsSpinning) => true);
+    setIsLoading(true);
     try {
       const response = await axios.post(`${SERVER_URL}/api/roll`, { email });
       const { newSlotValues, winAmount } = response.data;
-      const updatedCredits = userCredits - 1 + winAmount;
-      setUserCredits((userCredits) => updatedCredits);
-      setSlotValues((slotValues) => newSlotValues);
 
-      if (updatedCredits <= 0) {
+      setUserCredits((userCredits) => userCredits - 1 + winAmount);
+
+      // simulate slot spin timing
+      setSlotValues({ column1: "?", column2: "?", column3: "?" });
+
+      setTimeout(() => {
+        setSlotValues((slotValues) => ({
+          ...slotValues,
+          column1: newSlotValues.column1,
+        }));
+      }, 1000);
+
+      setTimeout(() => {
+        setSlotValues((slotValues) => ({
+          ...slotValues,
+          column2: newSlotValues.column2,
+        }));
+      }, 2000);
+
+      setTimeout(() => {
+        setSlotValues((slotValues) => ({
+          ...slotValues,
+          column3: newSlotValues.column3,
+        }));
+        setSlotsSpinning((slotsSpinning) => false); // all slots have finished spinning
+      }, 3000);
+
+      if (userCredits - 1 + winAmount <= 0) {
         setIsGameOver((isGameOver) => true);
       }
 
@@ -96,7 +123,7 @@ export const useGameActions = () => {
     } catch (error) {
       console.error("Error rolling slots:", error);
     } finally {
-      setIsLoading((isLoading) => false);
+      setIsLoading(false);
     }
   };
 
@@ -113,5 +140,6 @@ export const useGameActions = () => {
     isGameOver,
     isCashOut,
     slotValues,
+    slotsSpinning,
   };
 };

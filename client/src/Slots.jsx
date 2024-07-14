@@ -17,7 +17,7 @@ const Slots = ({ slotValues }) => (
 
 const SlotColumn = ({ value }) => (
   <div className="slot-column">
-    <h2 className="slot-icon">{SYMBOLS_MAP[value]}</h2>
+    <h2 className="slot-icon">{SYMBOLS_MAP[value] || "✖️"}</h2>
     <p className="slot-label">{value}</p>
   </div>
 );
