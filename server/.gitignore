@@ -1,5 +1,7 @@
 node_modules
 .vscode/*
 !.vscode/extensions.json
+coverage
 
 .env
+.env.test

@@ -1,0 +1,65 @@
+> server@1.0.0 test
+> jest --config jest.config.js
+
+PASS  tests/test_files/db.test.js
+● Console
+  console.log
+    Successfully connected to MongoDB
+    at log (db.js:18:13)
+
+PASS  tests/test_files/server.test.js
+
+PASS  tests/test_files/routes.test.js
+● Console
+  console.log
+    Error: email is required
+    at log (controllers.js:44:13)
+  console.log
+    Error: email is required
+    at log (controllers.js:75:13)
+  console.log
+    Error: email is required
+    at log (controllers.js:134:13)
+  console.log
+    Error: email is required
+    at log (controllers.js:162:13)
+
+(node:15616) [MONGODB DRIVER] Warning: useNewUrlParser is a deprecated option: useNewUrlParser has no effect since Node.js Driver version 4.0.0 and will be removed in the next major version
+(Use `node --trace-warnings ...` to show where the warning was created)
+(node:15616) [MONGODB DRIVER] Warning: useUnifiedTopology is a deprecated option: useUnifiedTopology has no effect since Node.js Driver version 4.0.0 and will be removed in the next major version
+
+PASS  tests/test_files/controllers.test.js
+● Console
+  console.log
+    New user registered: test@example.com with 10 credits
+    at log (controllers.js:28:15)
+  console.log
+    Existing user re-registered: test@example.com
+    at log (controllers.js:30:15)
+  console.log
+    Credits fetched for test@example.com: 10
+    at log (controllers.js:54:13)
+  console.log
+    Existing user re-registered: test@example.com
+    at log (controllers.js:30:15)
+  console.log
+    Slot values for test@example.com: {"column1":"L","column2":"C","column3":"C"}
+    at log (controllers.js:119:15)
+  console.log
+    Existing user re-registered: test@example.com
+    at log (controllers.js:30:15)
+  console.log
+    User test@example.com cashed out 9 credits
+    at log (controllers.js:146:13)
+  console.log
+    Existing user re-registered: test@example.com
+    at log (controllers.js:30:15)
+  console.log
+    User test@example.com bought 10 credits. Total credits: 10
+    at log (controllers.js:175:13)
+
+Test Suites: 4 passed, 4 total
+Tests:       13 passed, 13 total
+Snapshots:   0 total
+Time:        1.839 s, estimated 2 s
+Ran all test suites.
