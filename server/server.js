@@ -1,4 +1,4 @@
-require("dotenv").config(); // for the database URI
+require("dotenv").config(); // for the database uri
 
 const express = require("express");
 const cors = require("cors");
@@ -20,7 +20,7 @@ const REWARDS_MAP = {
 
 let databaseConnection = null;
 
-// connect to MongoDB:
+// connect to mongodb:
 const connectToDatabase = async () => {
   if (databaseConnection) {
     return databaseConnection;
@@ -29,15 +29,15 @@ const connectToDatabase = async () => {
   try {
     const uri = process.env.MONGODB_URI;
     if (!uri) {
-      throw new Error("MongoDB URI is not defined in .env file");
+      console.error("mongodb uri is not defined in .env file. exiting now...");
+      process.exit(1);
     }
 
     databaseConnection = await mongoose.connect(uri);
-
-    console.log("Successfully connected to MongoDB");
+    console.log("successfully connected to mongodb");
     return databaseConnection;
   } catch (error) {
-    console.error("Error connecting to MongoDB:", error);
+    console.error("error connecting to mongodb:", error);
     throw error;
   }
 };
@@ -52,16 +52,17 @@ const User = mongoose.model("User", userSchema);
 
 // initialize database connection:
 connectToDatabase().catch((err) => {
-  console.error("Failed to connect to the database. Exiting now...", err);
-  process.exit();
+  console.error("failed to connect to the database. exiting now...", err);
+  process.exit(1);
 });
 
 // register a new user or initialize user data:
 app.post("/api/register", async (req, res) => {
   const { email } = req.body;
+
   if (!email) {
-    console.log("Error: Email is required");
-    return res.status(400).json({ error: "Email is required" });
+    console.log("error: email is required");
+    return res.status(400).json({ error: "email is required" });
   }
 
   try {
@@ -69,58 +70,60 @@ app.post("/api/register", async (req, res) => {
     if (!user) {
       user = new User({ email, credits: 10 });
       await user.save();
-      console.log(`New user registered: ${email} with 10 credits`);
+      console.log(`new user registered: ${email} with 10 credits`);
     } else {
-      console.log(`Existing user re-registered: ${email}`);
+      console.log(`existing user re-registered: ${email}`);
     }
 
     res.json({ credits: user.credits });
   } catch (error) {
-    console.error("Error registering user:", error);
-    res.status(500).json({ error: "Internal Server Error" });
+    console.error("error registering user:", error);
+    res.status(500).json({ error: "internal server error" });
   }
 });
 
 // get user credits:
 app.get("/api/credits", async (req, res) => {
   const { email } = req.query;
+
   if (!email) {
-    console.log("Error: Email is required");
-    return res.status(400).json({ error: "Email is required" });
+    console.log("error: email is required");
+    return res.status(400).json({ error: "email is required" });
   }
 
   try {
     const user = await User.findOne({ email });
     if (!user) {
-      console.log("Error: User not found");
-      return res.status(404).json({ error: "User not found" });
+      console.log("error: user not found");
+      return res.status(404).json({ error: "user not found" });
     }
-    console.log(`Credits fetched for ${email}: ${user.credits}`);
+    console.log(`credits fetched for ${email}: ${user.credits}`);
     res.json({ credits: user.credits });
   } catch (error) {
-    console.error("Error fetching credits:", error);
-    res.status(500).json({ error: "Internal Server Error" });
+    console.error("error fetching credits:", error);
+    res.status(500).json({ error: "internal server error" });
   }
 });
 
-// roll the slots.. and return new values and winning amount:
+// roll the slots and return new values and winning amount:
 app.post("/api/roll", async (req, res) => {
   const { email } = req.body;
+
   if (!email) {
-    console.log("Error: Email is required");
-    return res.status(400).json({ error: "Email is required" });
+    console.log("error: email is required");
+    return res.status(400).json({ error: "email is required" });
   }
 
   try {
     const user = await User.findOne({ email });
     if (!user) {
-      console.log("Error: User not found");
-      return res.status(404).json({ error: "User not found" });
+      console.log("error: user not found");
+      return res.status(404).json({ error: "user not found" });
     }
 
     if (user.credits <= 0) {
-      console.log("Error: Not enough credits");
-      return res.status(400).json({ error: "Not enough credits" });
+      console.log("error: not enough credits");
+      return res.status(400).json({ error: "not enough credits" });
     }
 
     const getRandomSymbol = () =>
@@ -131,15 +134,14 @@ app.post("/api/roll", async (req, res) => {
       column3: getRandomSymbol(),
     };
 
-    // use cheating based on the number of credits user has:
     const winAmount = calculateWinAmount(newSlotValues);
     let cheatProbability = 0;
     if (user.credits > 60) cheatProbability = 0.6;
     else if (user.credits >= 40) cheatProbability = 0.3;
 
-    // Cheating roll:
+    // cheating roll:
     if (Math.random() < cheatProbability) {
-      console.log(`Cheating applied for ${email}`);
+      console.log(`cheating applied for ${email}`);
       const reRollSlotValues = {
         column1: getRandomSymbol(),
         column2: getRandomSymbol(),
@@ -147,75 +149,77 @@ app.post("/api/roll", async (req, res) => {
       };
       const reRollWinAmount = calculateWinAmount(reRollSlotValues);
       console.log(
-        `Re-rolled values for ${email}: ${JSON.stringify(reRollSlotValues)}`
+        `re-rolled values for ${email}: ${JSON.stringify(reRollSlotValues)}`
       );
       user.credits = Math.max(user.credits - 1 + reRollWinAmount, 0); // credits do not go negative
       await user.save();
       res.json({ newSlotValues: reRollSlotValues, winAmount: reRollWinAmount });
     } else {
-      console.log(`Slot values for ${email}: ${JSON.stringify(newSlotValues)}`);
+      console.log(`slot values for ${email}: ${JSON.stringify(newSlotValues)}`);
       user.credits = Math.max(user.credits - 1 + winAmount, 0); // user credits do not go negative
       await user.save();
       res.json({ newSlotValues, winAmount });
     }
   } catch (error) {
-    console.error("Error rolling slots:", error);
-    res.status(500).json({ error: "Internal Server Error" });
+    console.error("error rolling slots:", error);
+    res.status(500).json({ error: "internal server error" });
   }
 });
 
-// cash out the user credits and clear account
+// cash out the user credits and clear account:
 app.post("/api/cashout", async (req, res) => {
   const { email } = req.body;
+
   if (!email) {
-    console.log("Error: Email is required");
-    return res.status(400).json({ error: "Email is required" });
+    console.log("error: email is required");
+    return res.status(400).json({ error: "email is required" });
   }
 
   try {
     const user = await User.findOne({ email });
     if (!user) {
-      console.log("Error: User not found");
-      return res.status(404).json({ error: "User not found" });
+      console.log("error: user not found");
+      return res.status(404).json({ error: "user not found" });
     }
 
     const credits = user.credits;
-    console.log(`User ${email} cashed out ${credits} credits`);
+    console.log(`user ${email} cashed out ${credits} credits`);
 
     // reset credits of user:
     user.credits = 0;
     await user.save();
     res.json({ credits });
   } catch (error) {
-    console.error("Error cashing out:", error);
-    res.status(500).json({ error: "Internal Server Error" });
+    console.error("error cashing out:", error);
+    res.status(500).json({ error: "internal server error" });
   }
 });
 
-// buy more credits for the user
+// buy more credits for the user:
 app.post("/api/buy", async (req, res) => {
   const { email } = req.body;
+
   if (!email) {
-    console.log("Error: Email is required");
-    return res.status(400).json({ error: "Email is required" });
+    console.log("error: email is required");
+    return res.status(400).json({ error: "email is required" });
   }
 
   try {
     const user = await User.findOne({ email });
     if (!user) {
-      console.log("Error: User not found");
-      return res.status(404).json({ error: "User not found" });
+      console.log("error: user not found");
+      return res.status(404).json({ error: "user not found" });
     }
 
-    user.credits += 10;
+    user.credits = user.credits + 10;
     console.log(
-      `User ${email} bought 10 credits. Total credits: ${user.credits}`
+      `user ${email} bought 10 credits. total credits: ${user.credits}`
     );
     await user.save();
     res.json({ credits: user.credits });
   } catch (error) {
-    console.error("Error buying credits:", error);
-    res.status(500).json({ error: "Internal Server Error" });
+    console.error("error buying credits:", error);
+    res.status(500).json({ error: "internal server error" });
   }
 });
 
@@ -228,7 +232,17 @@ const calculateWinAmount = (slotValues) => {
   return 0;
 };
 
+// handle server shutdown:
+process.on("SIGINT", async () => {
+  if (databaseConnection) {
+    await mongoose.disconnect();
+    console.log("disconnected from mongodb");
+  }
+  console.error("Server is shutting down now...");
+  process.exit(0);
+});
+
 // server start:
 app.listen(port, () => {
-  console.log(`Server running on http://localhost:${port}`);
+  console.log(`server running on http://localhost:${port}`);
 });
