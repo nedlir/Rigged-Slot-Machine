@@ -32,7 +32,7 @@ TODO in client:
   - Add rotation animations with delay.
   - Refactor code to smaller components and separate files.
 
-3. **COMMIT 9b8b345**
+3. **COMMIT 8ce9037**
    
 Finished Server side logic and transfered the generation of the results there.
 
@@ -44,3 +44,17 @@ The data is saved at server side as an array of objects containing email of the 
 The problem with the current approach is that all of the data is stored in memory on the server in an array. If the server disconnects for some reason we will lose all our data... That's why the next step would be to move it all into a database. I'll probably stick with MongoDB since we have at the moment very simple data to store and don't need any relational database scheme.
 
 Also, need to add animations to the client and apply small design finishes.
+
+4. **COMMIT 14e0c7e**
+Created a mongoDB server where all users are stored to, kept it simple for this task saving only the email and number of credits each user has (mongo by default also generated a UUID in the object).
+
+Refactored the server code to smaller services - server, routes, controllers and db as suggested in [Node.js project architecture best practices](https://blog.logrocket.com/node-js-project-architecture-best-practices/).
+
+Refactored the client to smaller components, used the extension for VSCode -  React Refactor to make it quicker.
+
+The application is now basically fully functioning and working. Will add the rotation effect and tests.
+
+
+
+
+
