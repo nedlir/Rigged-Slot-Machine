@@ -56,6 +56,7 @@ button:hover {
 .slot-container {
   display: flex;
   justify-content: center;
+  align-items: center;
   margin-top: 20px;
 }
 
@@ -70,6 +71,7 @@ button:hover {
 
 .slot-label {
   margin-top: 10px;
+  font-size: 24px;
 }
 
 .thank-you-message {
