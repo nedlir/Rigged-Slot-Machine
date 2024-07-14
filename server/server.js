@@ -32,10 +32,8 @@ const connectToDatabase = async () => {
       throw new Error("MongoDB URI is not defined in .env file");
     }
 
-    databaseConnection = await mongoose.connect(uri, {
-      useNewUrlParser: true,
-      useUnifiedTopology: true,
-    });
+    databaseConnection = await mongoose.connect(uri);
+
     console.log("Successfully connected to MongoDB");
     return databaseConnection;
   } catch (error) {
