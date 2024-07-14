@@ -3,9 +3,13 @@ import axios from "axios";
 
 const SERVER_URL = "http://localhost:5000";
 
+// Regular expression for email validation
+const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]{2,}$/;
+
 export const useGameActions = () => {
   const [userCredits, setUserCredits] = useState(0);
   const [email, setEmail] = useState("");
+  const [emailError, setEmailError] = useState("");
   const [isGameStarted, setIsGameStarted] = useState(false);
   const [isGameOver, setIsGameOver] = useState(false);
   const [isCashOut, setIsCashOut] = useState(false);
@@ -18,10 +22,19 @@ export const useGameActions = () => {
   const [isSlotsSpinning, setIsSlotsSpinning] = useState(false);
 
   const handleEmailChange = (e) => {
-    setEmail((email) => e.target.value);
+    const newEmail = e.target.value;
+    setEmail((email) => newEmail);
+    // Validate email format
+    setEmailError((emailError) =>
+      !emailRegex.test(newEmail) ? "Invalid email format." : ""
+    );
   };
 
   const startGame = async () => {
+    if (emailError) {
+      console.log("Email is invalid.");
+      return;
+    }
     setIsLoading((isLoading) => true);
     try {
       const response = await axios.post(`${SERVER_URL}/api/register`, {
@@ -42,8 +55,12 @@ export const useGameActions = () => {
   const cashOut = async () => {
     if (isSlotsSpinning) {
       console.log(
-        "slots are still spinning. Cash out will be available after they swtop"
+        "Slots are still spinning. Cash out will be available after they stop."
       );
+      return;
+    }
+    if (emailError) {
+      console.log("Email is invalid.");
       return;
     }
     setIsLoading((isLoading) => true);
@@ -61,6 +78,10 @@ export const useGameActions = () => {
   };
 
   const buyCredits = async () => {
+    if (emailError) {
+      console.log("Email is invalid.");
+      return;
+    }
     setIsLoading((isLoading) => true);
     try {
       const response = await axios.post(`${SERVER_URL}/api/buy`, { email });
@@ -76,6 +97,10 @@ export const useGameActions = () => {
   };
 
   const rollSlots = async () => {
+    if (emailError) {
+      console.log("Email is invalid.");
+      return;
+    }
     if (userCredits <= 0 || isSlotsSpinning) {
       console.log(
         "You don't have enough credits to play or slots are already spinning."
@@ -90,8 +115,12 @@ export const useGameActions = () => {
 
       setUserCredits((userCredits) => userCredits - 1 + winAmount);
 
-      // simulate slot spin timing
-      setSlotValues({ column1: "?", column2: "?", column3: "?" });
+      // Simulate slot spin timing
+      setSlotValues((slotValues) => ({
+        column1: "?",
+        column2: "?",
+        column3: "?",
+      }));
 
       setTimeout(() => {
         setSlotValues((slotValues) => ({
@@ -112,7 +141,7 @@ export const useGameActions = () => {
           ...slotValues,
           column3: newSlotValues.column3,
         }));
-        setIsSlotsSpinning((isSlotsSpinning) => false); // all slots have finished spinning
+        setIsSlotsSpinning((isSlotsSpinning) => false); // All slots have finished spinning
       }, 3000);
 
       if (userCredits - 1 + winAmount <= 0) {
@@ -137,6 +166,7 @@ export const useGameActions = () => {
     rollSlots,
     userCredits,
     email,
+    emailError,
     isLoading,
     isGameStarted,
     isGameOver,
