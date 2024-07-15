@@ -110,7 +110,9 @@ The application is now basically fully functioning and working. Needs testing.
 
 This was my first experience with app testing. I chose Jest for this purpose since it is good for both Nodejs and React and followed the guidelines provided in [Full Stack Open's Part 4](https://fullstackopen.com/en/part4) as well as several YouTube tutorials. I generated the test files with [ChatGPT](https://chatgpt.com/) for testing of different scenarios. Still don't feel 100% comfortable with working with Jest and not fully familiar with the syntax for the testing files.
 
-### 7. **COMMIT **
+I was thinking about breaking down the custom hook of useGameActions into smaller components, but that would create "props drilling" and would make the code for this scope of project feel a bit cumbersome and difficult to follow. for a larger project I'd probably go with a state managing library like React Redux.
+
+### 7. **COMMIT 247440b**
 
 Removed development dependencies, prepared for production, and added installation instructions and requirement to the README.
 
