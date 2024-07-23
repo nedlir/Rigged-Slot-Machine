@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React from "react";
 import Slots from "./Slots";
 
 const GamePlay = ({
@@ -11,21 +11,16 @@ const GamePlay = ({
   cashOut,
   email,
   isLoading,
-  slotsSpinning,
+  isSlotsSpinning,
 }) => {
-  const [localSlotsSpinning, setLocalSlotsSpinning] = useState(slotsSpinning);
-
   const handleRollSlots = () => {
-    if (!localSlotsSpinning && userCredits > 0 && !isLoading) {
-      setLocalSlotsSpinning(true);
-      rollSlots().finally(() => {
-        setLocalSlotsSpinning(false);
-      });
+    if (!isSlotsSpinning && userCredits > 0 && !isLoading) {
+      rollSlots();
     }
   };
 
   const handleCashOut = () => {
-    if (!localSlotsSpinning) {
+    if (!isSlotsSpinning) {
       cashOut();
     }
   };
@@ -35,14 +30,14 @@ const GamePlay = ({
     userCredits,
     isLoading,
     isGameOver,
-    slotsSpinning,
+    isSlotsSpinning,
   }) =>
     !isGameOver &&
     userCredits > 0 && (
       <button
         className="roll-button"
         onClick={handleRollSlots}
-        disabled={isLoading || localSlotsSpinning}
+        disabled={isLoading || isSlotsSpinning}
       >
         {isLoading ? "Rolling..." : "Roll Slots"}
       </button>
@@ -60,7 +55,7 @@ const GamePlay = ({
         userCredits={userCredits}
         isLoading={isLoading}
         isGameOver={isGameOver}
-        slotsSpinning={localSlotsSpinning}
+        isSlotsSpinning={isSlotsSpinning}
       />
       {(isGameOver || userCredits <= 0) && (
         <GameOverSection
@@ -74,7 +69,7 @@ const GamePlay = ({
         <button
           className="cash-out-button"
           onClick={handleCashOut}
-          disabled={isLoading || localSlotsSpinning}
+          disabled={isLoading || isSlotsSpinning}
         >
           {isLoading ? "Processing..." : "Cash Out"}
         </button>
